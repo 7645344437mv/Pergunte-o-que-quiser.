@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Perguntas e Respostas</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background: #f0f0f0; }
+    .box { background: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    input, textarea { width: 100%; padding: 8px; margin-top: 10px; }
+    button { margin-top: 10px; padding: 8px 15px; }
+    .resposta { margin-top: 10px; }
+    .like { color: blue; cursor: pointer; margin-left: 10px; }
+  </style>
+</head>
+<body>
+
+  <div class="box">
+    <h2>Faça uma pergunta:</h2>
+    <textarea id="perguntaInput" placeholder="Digite sua pergunta..."></textarea>
+    <button onclick="criarPergunta()">Enviar Pergunta</button>
+  </div>
+
+  <div id="areaPerguntas"></div>
+
+  <div class="box">
+    <h3>Você gostou do site?</h3>
+    <button onclick="avaliar('sim')">Sim</button>
+    <button onclick="avaliar('nao')">Não</button>
+    <p id="feedbackFinal"></p>
+  </div>
+
+  <script>
+    let perguntas = JSON.parse(localStorage.getItem("perguntas")) || [];
+
+    function salvarNoLocalStorage() {
+      localStorage.setItem("perguntas", JSON.stringify(perguntas));
+    }
+
+    function criarPergunta() {
+      const texto = document.getElementById("perguntaInput").value.trim();
+      if (texto === "") return;
+      perguntas.push({ texto, respostas: [] });
+      document.getElementById("perguntaInput").value = "";
+      salvarNoLocalStorage();
+      renderizarPerguntas();
+    }
+
+    function adicionarResposta(index) {
+      const input = document.getElementById("respostaInput" + index);
+      const texto = input.value.trim();
+      if (texto === "") return;
+      perguntas[index].respostas.push({ texto, likes: 0, curtiu: false });
+      input.value = "";
+      salvarNoLocalStorage();
+      renderizarPerguntas();
+    }
+
+    function darLike(pIndex, rIndex) {
+      const resposta = perguntas[pIndex].respostas[rIndex];
+      if (!resposta.curtiu) {
+        resposta.likes++;
+        resposta.curtiu = true;
+        salvarNoLocalStorage();
+        renderizarPerguntas();
+      } else {
+        alert("Você já curtiu essa resposta.");
+      }
+    }
+
+    function renderizarPerguntas() {
+      const area = document.getElementById("areaPerguntas");
+      area.innerHTML = "";
+      perguntas.forEach((pergunta, pIndex) => {
+        const div = document.createElement("div");
+        div.className = "box";
+        div.innerHTML = `
+          <h3>${pergunta.texto}</h3>
+          <input type="text" id="respostaInput${pIndex}" placeholder="Responder...">
+          <button onclick="adicionarResposta(${pIndex})">Responder</button>
+          <div class="resposta">
+            ${pergunta.respostas.map((r, rIndex) => `
+              <p>${r.texto} - Curtidas: ${r.likes}
+              <span class="like" onclick="darLike(${pIndex}, ${rIndex})">Curtir</span></p>
+            `).join("")}
+          </div>
+        `;
+        area.appendChild(div);
+      });
+    }
+
+    function avaliar(resposta) {
+      const msg = resposta === "sim" ? "Obrigado! Ficamos felizes." : "Vamos melhorar!";
+      document.getElementById("feedbackFinal").innerText = msg;
+    }
+
+    renderizarPerguntas();
+  </script>
+
+</body>
+</html>
